@@ -1,20 +1,36 @@
 import io
+import os
+import uuid
+import shutil
 import pandas as pd
 from typing import BinaryIO
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype, is_string_dtype
 
 from apils.domain.entities.file_metadata import FileMetadata, ColumnMetadata
 from apils.core.exceptions import FileProcessingDomainError
+from apils.core.config import settings
 
 class FileService:
     def process_file(self, file_stream: BinaryIO, filename: str) -> FileMetadata:
         try:
-            if filename.endswith(".csv"):
-                df = pd.read_csv(file_stream)
-            elif filename.endswith((".xls", ".xlsx")):
-                df = pd.read_excel(file_stream)
-            else:
+            file_id = str(uuid.uuid4())
+            upload_dir = settings.upload_dir
+            os.makedirs(upload_dir, exist_ok=True)
+            
+            # Save file to disk
+            ext = os.path.splitext(filename)[1].lower()
+            if ext not in [".csv", ".xls", ".xlsx"]:
                 raise FileProcessingDomainError("Unsupported file format. Please upload CSV or Excel.")
+                
+            file_path = os.path.join(upload_dir, f"{file_id}{ext}")
+            with open(file_path, "wb") as f:
+                shutil.copyfileobj(file_stream, f)
+            
+            # Read from saved file
+            if ext == ".csv":
+                df = pd.read_csv(file_path)
+            elif ext in [".xls", ".xlsx"]:
+                df = pd.read_excel(file_path)
             
             columns = []
             
@@ -59,6 +75,7 @@ class FileService:
                 columns.append(col_meta)
                 
             return FileMetadata(
+                id=file_id,
                 filename=filename,
                 total_rows=len(df),
                 columns=columns
@@ -67,4 +84,12 @@ class FileService:
             raise
         except Exception as e:
             raise FileProcessingDomainError(f"Error processing file: {str(e)}")
+
+    def get_file_path(self, file_id: str) -> str:
+        upload_dir = settings.upload_dir
+        for ext in [".csv", ".xls", ".xlsx"]:
+            path = os.path.join(upload_dir, f"{file_id}{ext}")
+            if os.path.exists(path):
+                return path
+        raise FileProcessingDomainError(f"File not found for ID: {file_id}")
 

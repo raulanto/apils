@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     # Optional DB config for later
     database_url: str | None = None
     
+    # Upload directory
+    upload_dir: str = "data/uploads"
+    
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 

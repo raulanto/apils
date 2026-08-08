@@ -14,6 +14,7 @@ class ColumnMetadata:
 
 @dataclass
 class FileMetadata:
+    id: str
     filename: str
     total_rows: int
     columns: list[ColumnMetadata]

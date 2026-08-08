@@ -16,6 +16,7 @@ class ColumnSchema(BaseModel):
 
 
 class FileResponseSchema(BaseModel):
+    id: str
     filename: str
     total_rows: int
     columns: list[ColumnSchema]
