@@ -1,6 +1,8 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Any
 
+
+
 class ReportSchemaConfig(BaseModel):
     totalColumns: int
     allColumns: list[str]
@@ -13,10 +15,15 @@ class ReportSortConfig(BaseModel):
     column: str
     direction: str  # "asc" or "desc"
 
+class ReportHeatmapTextRule(BaseModel):
+    value: str
+    color: str
+
 class ReportHeatmapConfig(BaseModel):
     column: str
     direction: str  # "asc" or "desc"
     dataType: str
+    textRules: list[ReportHeatmapTextRule] | None = None
 
 class ReportFilterConfig(BaseModel):
     column: str

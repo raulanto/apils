@@ -98,6 +98,14 @@ class ReportService:
         for hm in (payload.heatmaps or []):
             col = hm.column
             if col in df.columns:
+                is_text = hm.dataType == "text"
+                if is_text and getattr(hm, "textRules", None):
+                    heatmap_bounds[col] = {
+                        "is_text": True,
+                        "rules": {rule.value: rule.color for rule in hm.textRules}
+                    }
+                    continue
+                
                 is_date = hm.dataType == "date" or pd.api.types.is_datetime64_any_dtype(df[col])
                 is_numeric = hm.dataType in ("number", "currency", "percentage", "numeric") or pd.api.types.is_numeric_dtype(df[col])
                 
@@ -187,7 +195,17 @@ class ReportService:
                         if pd.notna(val) and val != '':
                             bounds = heatmap_bounds[col_name]
                             try:
-                                if bounds["is_date"]:
+                                if bounds.get("is_text"):
+                                    rules = bounds.get("rules", {})
+                                    val_str = str(val).strip()
+                                    # Case-insensitive match or exact? The user used "SI" and "No". Let's do exact match first, or lower-case mapping.
+                                    # Actually, let's just do exact string match.
+                                    if val_str in rules:
+                                        bg_color = colors.HexColor(rules[val_str])
+                                        style.add('BACKGROUND', (col_idx, row_idx), (col_idx, row_idx), bg_color)
+                                    continue
+
+                                if bounds.get("is_date", False):
                                     val_parsed = pd.to_datetime(val, errors='coerce')
                                     if pd.isna(val_parsed):
                                         continue
