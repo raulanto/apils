@@ -1,1 +1,1 @@
- uv run uvicorn apils.main:app --reload
+ uv run uvicorn apils.main:app --reload 

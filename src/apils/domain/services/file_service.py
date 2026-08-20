@@ -9,6 +9,7 @@ from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype, is_strin
 from apils.domain.entities.file_metadata import FileMetadata, ColumnMetadata
 from apils.core.exceptions import FileProcessingDomainError
 from apils.core.config import settings
+from apils.domain.services.dataframe_utils import infer_and_convert_types
 
 class FileService:
     def process_file(self, file_stream: BinaryIO, filename: str) -> FileMetadata:
@@ -31,15 +32,17 @@ class FileService:
                 df = pd.read_csv(file_path)
             elif ext in [".xls", ".xlsx"]:
                 df = pd.read_excel(file_path)
+                
+            # Apply type inference globally
+            df = infer_and_convert_types(df)
+            
+            # Save the strongly typed dataframe as Parquet for later fast reads
+            parquet_path = os.path.join(upload_dir, f"{file_id}.parquet")
+            df.to_parquet(parquet_path)
             
             columns = []
             
             for col in df.columns:
-                if df[col].dtype == 'object' or is_string_dtype(df[col]):
-                    # Intentar convertir a fecha
-                    converted = pd.to_datetime(df[col], errors='coerce')
-                    if converted.notna().sum() == df[col].notna().sum() and not df[col].dropna().empty:
-                        df[col] = converted
 
                 is_num = is_numeric_dtype(df[col])
                 is_date = is_datetime64_any_dtype(df[col])
@@ -83,13 +86,12 @@ class FileService:
         except FileProcessingDomainError:
             raise
         except Exception as e:
-            raise FileProcessingDomainError(f"Error processing file: {str(e)}")
+            raise FileProcessingDomainError(f"Error processing file: {str(e)}") from e
 
     def get_file_path(self, file_id: str) -> str:
         upload_dir = settings.upload_dir
-        for ext in [".csv", ".xls", ".xlsx"]:
-            path = os.path.join(upload_dir, f"{file_id}{ext}")
-            if os.path.exists(path):
-                return path
+        path = os.path.join(upload_dir, f"{file_id}.parquet")
+        if os.path.exists(path):
+            return path
         raise FileProcessingDomainError(f"File not found for ID: {file_id}")
 

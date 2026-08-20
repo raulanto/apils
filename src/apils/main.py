@@ -10,6 +10,7 @@ from apils.core.exception_handlers import (
 )
 
 from fastapi.middleware.cors import CORSMiddleware
+from apils.api.middlewares.logging import LoggingMiddleware
 
 app = FastAPI(
     title=settings.app_name,
@@ -18,14 +19,16 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Configuración CORS para permitir peticiones desde cualquier origen
+# Configuración CORS estricta (usando FRONTEND_CORS_ORIGINS desde el .env)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todos los orígenes
+    allow_origins=settings.frontend_cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],  # Permite todos los métodos HTTP
-    allow_headers=["*"],  # Permite todos los headers
+    allow_methods=["*"],  # o especificar: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_headers=["*"],
 )
+
+app.add_middleware(LoggingMiddleware)
 
 app.add_exception_handler(DomainError, domain_error_handler)
 app.add_exception_handler(RequestValidationError, validation_error_handler)
