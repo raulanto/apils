@@ -21,7 +21,8 @@ uv.lock
 .claude
 skills-lock.json
 icon.svg
-README.md
+# NOTE: README.md is required by pyproject.toml ([project].readme) — do not ignore it,
+# the `uv_build` wheel build fails without it.
 
 # Migrations are not run in the serverless function; run them from CI/locally
 alembic
