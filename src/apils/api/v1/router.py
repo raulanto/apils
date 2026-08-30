@@ -27,4 +27,9 @@ api_router.include_router(
     tags=["users"],
 )
 
+from apils.api.v1.endpoints import files, roles, permissions, users
+
+api_router.include_router(roles.router)
+api_router.include_router(permissions.router)
 api_router.include_router(files.router)
+api_router.include_router(users.router)
