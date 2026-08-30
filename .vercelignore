@@ -1,0 +1,28 @@
+# Local envs / caches
+.venv
+__pycache__
+*.py[oc]
+.pytest_cache
+.ruff_cache
+.mypy_cache
+
+# Local data / db (serverless filesystem is read-only + ephemeral)
+data
+test.db
+*.sqlite
+*.sqlite3
+
+# Not needed at runtime on Vercel (deps come from requirements.txt)
+uv.lock
+
+# Tooling / meta
+.git
+.agents
+.claude
+skills-lock.json
+icon.svg
+README.md
+
+# Migrations are not run in the serverless function; run them from CI/locally
+alembic
+alembic.ini
